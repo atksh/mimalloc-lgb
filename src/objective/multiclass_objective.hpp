@@ -148,8 +148,8 @@ namespace LightGBM
           for (int k = 0; k < num_class_; ++k)
           {
             auto p = rec[k];
-            auto logp = std::log(p + 1e-8);
-            auto neg_logp = std::log(1 - p + 1e-8);
+            //auto logp = std::log(p + 1e-8);
+            //auto neg_logp = std::log(1 - p + 1e-8);
             size_t idx = static_cast<size_t>(num_data_) * k + i;
             double mask = static_cast<double>(rand_mask.NextFloat() < static_cast<float>(w[label_int_[i]]));
             if (label_int_[i] == k)
