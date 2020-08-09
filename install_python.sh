@@ -4,5 +4,5 @@ cd build
 cmake ..
 make -j32
 cd ..
-cd pyhton-package
+cd python-package
 python setup.py install --precompile
