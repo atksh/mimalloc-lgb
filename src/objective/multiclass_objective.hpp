@@ -137,6 +137,7 @@ namespace LightGBM
 #pragma omp parallel for schedule(static) private(rec)
         for (data_size_t i = 0; i < num_data_; ++i)
         {
+          double gamma = 2.0f;
           rec.resize(num_class_);
           for (int k = 0; k < num_class_; ++k)
           {
@@ -147,17 +148,23 @@ namespace LightGBM
           for (int k = 0; k < num_class_; ++k)
           {
             auto p = rec[k];
+            auto logp = std::log(p + 1e-8);
+            auto neg_logp = std::log(1 - p + 1e-8);
             size_t idx = static_cast<size_t>(num_data_) * k + i;
             double mask = static_cast<double>(rand_mask.NextFloat() < static_cast<float>(w[label_int_[i]]));
             if (label_int_[i] == k)
             {
-              gradients[idx] = static_cast<score_t>((p - 1.0f) * mask);
+              //gradients[idx] = static_cast<score_t>((p - 1.0f) * mask);
+              gradients[idx] = static_cast<score_t>(std::pow(p - 1.0f, gamma) * (gamma * p * logp + p - 1.0f) * mask); // focal loss
+              hessians[idx] = static_cast<score_t>(factor_ * (-std::pow(1 - p, gamma - 1.0f) * ((2 * gamma + 1) * (p - 1) + gamma * (gamma * p + p - 1) * logp)) * mask);
             }
             else
             {
-              gradients[idx] = static_cast<score_t>((p)*mask);
+              //gradients[idx] = static_cast<score_t>((p)*mask);
+              gradients[idx] = static_cast<score_t>(std::pow(p, gamma) * (gamma * (1.0f - p) * neg_logp - p) * mask); // focal loss
+              hessians[idx] = static_cast<score_t>(factor_ * (-std::pow(p, gamma - 1.0f) * ((2 * gamma + 1) * (p - 1) + gamma * (gamma * (p - 1.0f) + p) * neg_logp)) * mask);
             }
-            hessians[idx] = static_cast<score_t>((factor_ * p * (1.0f - p)) * mask);
+            //hessians[idx] = static_cast<score_t>((factor_ * p * (1.0f - p)) * mask);
           }
         }
       }

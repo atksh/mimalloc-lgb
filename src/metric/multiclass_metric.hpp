@@ -86,7 +86,7 @@ namespace LightGBM
           }
           for (data_size_t i = 0; i < num_data_; ++i)
           {
-            w[static_cast<int>(label_int_[i])]++;
+            w[static_cast<int>(label_[i])]++;
           }
           for (int i = 0; i < num_class_; ++i)
           {
