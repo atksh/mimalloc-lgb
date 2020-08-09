@@ -79,6 +79,19 @@ namespace LightGBM
       {
         if (weights_ == nullptr)
         {
+          std::vector<double, mi_stl_allocator<double>> w(num_class_);
+          for (int i = 0; i < num_class_; ++i)
+          {
+            w[i] = 0;
+          }
+          for (data_size_t i = 0; i < num_data_; ++i)
+          {
+            w[static_cast<int>(label_int_[i])]++;
+          }
+          for (int i = 0; i < num_class_; ++i)
+          {
+            w[i] = num_data_ / w[i];
+          }
 #pragma omp parallel for schedule(static) reduction(+ \
                                                     : sum_loss)
           for (data_size_t i = 0; i < num_data_; ++i)
@@ -92,7 +105,7 @@ namespace LightGBM
             std::vector<double, mi_stl_allocator<double>> rec(num_pred_per_row);
             objective->ConvertOutput(raw_score.data(), rec.data());
             // add loss
-            sum_loss += PointWiseLossCalculator::LossOnPoint(label_[i], &rec, config_);
+            sum_loss += PointWiseLossCalculator::LossOnPoint(label_[i], &rec, config_) * w[label_[i]];
           }
         }
         else
