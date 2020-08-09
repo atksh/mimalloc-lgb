@@ -110,6 +110,29 @@ namespace LightGBM
     {
       if (weights_ == nullptr)
       {
+        std::vector<double, mi_stl_allocator<double>> w(num_class_);
+        for (int i = 0; i < num_class_; ++i)
+        {
+          w[i] = 0;
+        }
+        for (data_size_t i = 0; i < num_data_; ++i)
+        {
+          w[static_cast<int>(label_int_[i])]++;
+        }
+        for (int i = 0; i < num_class_; ++i)
+        {
+          w[i] = num_data_ / w[i];
+        }
+        double max_w = 0.0;
+        for (int i = 0; i < num_class_; ++i)
+        {
+          max_w = std::max(max_w, w[i]);
+        }
+        for (int i = 0; i < num_class_; ++i)
+        {
+          w[i] /= max_w;
+        }
+
         std::vector<double, mi_stl_allocator<double>> rec;
 #pragma omp parallel for schedule(static) private(rec)
         for (data_size_t i = 0; i < num_data_; ++i)
@@ -125,22 +148,23 @@ namespace LightGBM
           {
             auto p = rec[k];
             size_t idx = static_cast<size_t>(num_data_) * k + i;
+            double mask = static_cast<double>(rand_mask.NextFloat() < static_cast<float>(w[label_int_[i]]));
             if (label_int_[i] == k)
             {
-              gradients[idx] = static_cast<score_t>(p - 1.0f);
+              gradients[idx] = static_cast<score_t>((p - 1.0f) * mask);
             }
             else
             {
-              gradients[idx] = static_cast<score_t>(p);
+              gradients[idx] = static_cast<score_t>((p)*mask);
             }
-            hessians[idx] = static_cast<score_t>(factor_ * p * (1.0f - p));
+            hessians[idx] = static_cast<score_t>((factor_ * p * (1.0f - p)) * mask);
           }
         }
       }
       else
       {
         std::vector<double, mi_stl_allocator<double>> rec;
-#pragma omp parallel for schedule(static) private(rec)
+#pragma omp parallel for schedule(static) private(rec) shared(rand_mask)
         for (data_size_t i = 0; i < num_data_; ++i)
         {
           rec.resize(num_class_);
@@ -154,7 +178,7 @@ namespace LightGBM
           {
             auto p = rec[k];
             size_t idx = static_cast<size_t>(num_data_) * k + i;
-            float mask = static_cast<float>(rand_mask.NextFloat() < static_cast<float>(weights_[i]) / max_weight);
+            double mask = static_cast<double>(rand_mask.NextFloat() < static_cast<float>(weights_[i]) / max_weight);
             if (label_int_[i] == k)
             {
               gradients[idx] = static_cast<score_t>((p - 1.0f) * mask);
