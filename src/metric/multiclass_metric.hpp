@@ -88,12 +88,15 @@ namespace LightGBM
           {
             w[static_cast<int>(label_[i])]++;
           }
+          double sw = 0.0f;
           for (int i = 0; i < num_class_; ++i)
           {
             w[i] = num_data_ / w[i];
+            sw += w[i];
           }
+
 #pragma omp parallel for schedule(static) reduction(+ \
-                                                    : sum_loss)
+                                                    : sum_loss) firstprivate(sw)
           for (data_size_t i = 0; i < num_data_; ++i)
           {
             std::vector<double, mi_stl_allocator<double>> raw_score(num_tree_per_iteration);
@@ -105,7 +108,7 @@ namespace LightGBM
             std::vector<double, mi_stl_allocator<double>> rec(num_pred_per_row);
             objective->ConvertOutput(raw_score.data(), rec.data());
             // add loss
-            sum_loss += PointWiseLossCalculator::LossOnPoint(label_[i], &rec, config_) * w[label_[i]];
+            sum_loss += PointWiseLossCalculator::LossOnPoint(label_[i], &rec, config_) * w[label_[i]] / sw;
           }
         }
         else
