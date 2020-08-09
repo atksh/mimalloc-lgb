@@ -137,7 +137,7 @@ namespace LightGBM
 #pragma omp parallel for schedule(static) private(rec)
         for (data_size_t i = 0; i < num_data_; ++i)
         {
-          double gamma = 2.0f;
+          //double gamma = 2.0f;
           rec.resize(num_class_);
           for (int k = 0; k < num_class_; ++k)
           {
