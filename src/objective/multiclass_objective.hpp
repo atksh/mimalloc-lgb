@@ -62,12 +62,14 @@ namespace LightGBM
 
     void Init(const Metadata &metadata, data_size_t num_data) override
     {
+      rand_mask = Random(42);
       num_data_ = num_data;
       label_ = metadata.label();
       weights_ = metadata.weights();
       label_int_.resize(num_data_);
       class_init_probs_.resize(num_class_, 0.0);
       double sum_weight = 0.0;
+      max_weight = 0.0;
       for (int i = 0; i < num_data_; ++i)
       {
         label_int_[i] = static_cast<int>(label_[i]);
@@ -83,6 +85,7 @@ namespace LightGBM
         {
           class_init_probs_[label_int_[i]] += weights_[i];
           sum_weight += weights_[i];
+          max_weight = std::max(max_weight, static_cast<float>(weights_[i]));
         }
       }
       if (weights_ == nullptr)
@@ -151,15 +154,16 @@ namespace LightGBM
           {
             auto p = rec[k];
             size_t idx = static_cast<size_t>(num_data_) * k + i;
+            float mask = static_cast<float>(rand_mask.NextFloat() < static_cast<float>(weights_[i]) / max_weight);
             if (label_int_[i] == k)
             {
-              gradients[idx] = static_cast<score_t>((p - 1.0f) * weights_[i]);
+              gradients[idx] = static_cast<score_t>((p - 1.0f) * mask);
             }
             else
             {
-              gradients[idx] = static_cast<score_t>((p)*weights_[i]);
+              gradients[idx] = static_cast<score_t>((p)*mask);
             }
-            hessians[idx] = static_cast<score_t>((factor_ * p * (1.0f - p)) * weights_[i]);
+            hessians[idx] = static_cast<score_t>((factor_ * p * (1.0f - p)) * mask);
           }
         }
       }
@@ -221,6 +225,8 @@ namespace LightGBM
     /*! \brief Weights for data */
     const label_t *weights_;
     std::vector<double, mi_stl_allocator<double>> class_init_probs_;
+    Random rand_mask;
+    float max_weight;
   };
 
   /*!
