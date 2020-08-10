@@ -170,8 +170,14 @@ namespace LightGBM
       }
       else
       {
+        std::vector<double, mi_stl_allocator<double>> noise(num_data_);
+        for (data_size_t i = 0; i < num_data_; ++i)
+        {
+          noise[i] = rand_mask.NextFloat();
+        }
+
         std::vector<double, mi_stl_allocator<double>> rec;
-#pragma omp parallel for schedule(static) private(rec) 
+#pragma omp parallel for schedule(static) private(rec)
         for (data_size_t i = 0; i < num_data_; ++i)
         {
           rec.resize(num_class_);
@@ -185,7 +191,7 @@ namespace LightGBM
           {
             auto p = rec[k];
             size_t idx = static_cast<size_t>(num_data_) * k + i;
-            double mask = static_cast<double>(rand_mask.NextFloat() < static_cast<float>(weights_[i]) / max_weight);
+            double mask = static_cast<double>(noise[i] < static_cast<float>(weights_[i]) / max_weight);
             if (label_int_[i] == k)
             {
               gradients[idx] = static_cast<score_t>((p - 1.0f) * mask);
