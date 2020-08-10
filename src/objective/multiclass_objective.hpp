@@ -171,7 +171,7 @@ namespace LightGBM
       else
       {
         std::vector<double, mi_stl_allocator<double>> rec;
-#pragma omp parallel for schedule(static) private(rec) shared(rand_mask)
+#pragma omp parallel for schedule(static) private(rec) 
         for (data_size_t i = 0; i < num_data_; ++i)
         {
           rec.resize(num_class_);
