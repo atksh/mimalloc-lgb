@@ -1,5 +1,7 @@
 installation: `mkdir build && cd build && cmake .. && make -j32 && cd ../python-package && python setup.py install --precompile`
+
 usage: `LD_PRELOAD=/usr/local/lib/libmimalloc.so PYTHONMALLOC=malloc python/jupyter notebook`
+
 mimalloc is required.
 
 

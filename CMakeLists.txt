@@ -9,7 +9,7 @@ PROJECT(lightgbm)
 
 OPTION(USE_MPI "Enable MPI-based parallel learning" OFF)
 OPTION(USE_OPENMP "Enable OpenMP" ON)
-OPTION(USE_GPU "Enable GPU-accelerated training" ON)
+OPTION(USE_GPU "Enable GPU-accelerated training" OFF)
 OPTION(USE_SWIG "Enable SWIG to generate Java API" OFF)
 OPTION(USE_HDFS "Enable HDFS support (EXPERIMENTAL)" OFF)
 OPTION(USE_TIMETAG "Set to ON to output time costs" OFF)
