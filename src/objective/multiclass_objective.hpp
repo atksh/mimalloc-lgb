@@ -222,7 +222,7 @@ namespace LightGBM
             {
               gradients[idx] = static_cast<score_t>((p)*mask*weights_[i]);
             }
-            hessians[idx] = static_cast<score_t>((factor_ * p * (1.0f - p)) * mask*[weights_[i]]);
+            hessians[idx] = static_cast<score_t>((factor_ * p * (1.0f - p)) * mask * weights_[i]);
           }
         }
       }
