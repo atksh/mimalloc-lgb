@@ -75,25 +75,26 @@ namespace LightGBM
         num_tree_per_iteration = objective->NumModelPerIteration();
         num_pred_per_row = objective->NumPredictOneRow();
       }
+      std::vector<double, mi_stl_allocator<double>> w(num_class_);
+      for (int i = 0; i < num_class_; ++i)
+      {
+        w[i] = 0;
+      }
+      for (data_size_t i = 0; i < num_data_; ++i)
+      {
+        w[static_cast<int>(label_[i])]++;
+      }
+      double sw = 0.0f;
+      for (int i = 0; i < num_class_; ++i)
+      {
+        w[i] = num_data_ / w[i];
+        sw += w[i];
+      }
+
       if (objective != nullptr)
       {
         if (weights_ == nullptr)
         {
-          std::vector<double, mi_stl_allocator<double>> w(num_class_);
-          for (int i = 0; i < num_class_; ++i)
-          {
-            w[i] = 0;
-          }
-          for (data_size_t i = 0; i < num_data_; ++i)
-          {
-            w[static_cast<int>(label_[i])]++;
-          }
-          double sw = 0.0f;
-          for (int i = 0; i < num_class_; ++i)
-          {
-            w[i] = num_data_ / w[i];
-            sw += w[i];
-          }
 
 #pragma omp parallel for schedule(static) reduction(+ \
                                                     : sum_loss) firstprivate(sw)
@@ -126,7 +127,7 @@ namespace LightGBM
             std::vector<double, mi_stl_allocator<double>> rec(num_pred_per_row);
             objective->ConvertOutput(raw_score.data(), rec.data());
             // add loss
-            sum_loss += PointWiseLossCalculator::LossOnPoint(label_[i], &rec, config_) * weights_[i];
+            sum_loss += PointWiseLossCalculator::LossOnPoint(label_[i], &rec, config_) * weights_[i] * w[label_[i]] / sw;
           }
         }
       }
@@ -145,7 +146,7 @@ namespace LightGBM
               rec[k] = static_cast<double>(score[idx]);
             }
             // add loss
-            sum_loss += PointWiseLossCalculator::LossOnPoint(label_[i], &rec, config_);
+            sum_loss += PointWiseLossCalculator::LossOnPoint(label_[i], &rec, config_) * w[label_[i]] / sw;
           }
         }
         else
@@ -161,7 +162,7 @@ namespace LightGBM
               rec[k] = static_cast<double>(score[idx]);
             }
             // add loss
-            sum_loss += PointWiseLossCalculator::LossOnPoint(label_[i], &rec, config_) * weights_[i];
+            sum_loss += PointWiseLossCalculator::LossOnPoint(label_[i], &rec, config_) * weights_[i] * w[label_[i]] / sw;
           }
         }
       }
