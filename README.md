@@ -4,6 +4,9 @@ usage: `LD_PRELOAD=/usr/local/lib/libmimalloc.so PYTHONMALLOC=malloc python/jupy
 
 mimalloc is required.
 
+multiclass-objective is alwayas negative downsampled per iter by dropouting some data in calculationg grad.
+multiclass-logloss is not multiplied by scale i.e., #classes
+
 
 LightGBM, Light Gradient Boosting Machine
 =========================================
